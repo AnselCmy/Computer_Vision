@@ -1,0 +1,21 @@
+/Applications/CLion.app/Contents/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /Users/chen/Desktop/CV/Computer_Vision
+CMake Warning at CMakeLists.txt:3 (find_package):
+  By not providing "FindOpenCV3.cmake" in CMAKE_MODULE_PATH this project has
+  asked CMake to find a package configuration file provided by "OpenCV3", but
+  CMake did not find one.
+
+  Could not find a package configuration file provided by "OpenCV3" with any
+  of the following names:
+
+    OpenCV3Config.cmake
+    opencv3-config.cmake
+
+  Add the installation prefix of "OpenCV3" to CMAKE_PREFIX_PATH or set
+  "OpenCV3_DIR" to a directory containing one of the above files.  If
+  "OpenCV3" provides a separate development package or SDK, be sure it has
+  been installed.
+
+
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /Users/chen/Desktop/CV/Computer_Vision/cmake-build-debug
