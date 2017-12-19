@@ -4,11 +4,12 @@
 #include "boxFilter.h"
 #include "calGLCM.h"
 #include <stdio.h>
+#include "histogramEqualization.h"
 using namespace std;
 using namespace cv;
 
 int main()
 {
-    calGLCMTest();
+    histEqualTest();
     return 0;
 }

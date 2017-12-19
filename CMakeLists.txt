@@ -5,7 +5,7 @@ include_directories( ${OpenCV_INCLUDE_DIRS} )
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES main.cpp adaptiveThreshold.h boxFilter.h calGLCM.h)
+set(SOURCE_FILES main.cpp adaptiveThreshold.h boxFilter.h calGLCM.h histogramEqualization.h)
 add_executable(Computer_Vision ${SOURCE_FILES})
 find_package(OpenCV REQUIRED)
 target_link_libraries(Computer_Vision ${OpenCV_LIBS})

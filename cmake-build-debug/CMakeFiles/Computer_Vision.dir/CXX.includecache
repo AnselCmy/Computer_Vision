@@ -28,6 +28,14 @@ opencv2/opencv.hpp
 cmath
 -
 
+/Users/chen/Desktop/CV/Computer_Vision/histogramEqualization.h
+iostream
+-
+opencv2/opencv.hpp
+-
+cmath
+-
+
 /Users/chen/Desktop/CV/Computer_Vision/main.cpp
 iostream
 -
@@ -41,6 +49,8 @@ calGLCM.h
 /Users/chen/Desktop/CV/Computer_Vision/calGLCM.h
 stdio.h
 -
+histogramEqualization.h
+/Users/chen/Desktop/CV/Computer_Vision/histogramEqualization.h
 
 /usr/local/include/opencv/cxcore.h
 opencv2/core/core_c.h

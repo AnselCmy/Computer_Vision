@@ -4,6 +4,7 @@
 CMakeFiles/Computer_Vision.dir/main.cpp.o: ../adaptiveThreshold.h
 CMakeFiles/Computer_Vision.dir/main.cpp.o: ../boxFilter.h
 CMakeFiles/Computer_Vision.dir/main.cpp.o: ../calGLCM.h
+CMakeFiles/Computer_Vision.dir/main.cpp.o: ../histogramEqualization.h
 CMakeFiles/Computer_Vision.dir/main.cpp.o: ../main.cpp
 CMakeFiles/Computer_Vision.dir/main.cpp.o: /usr/local/include/opencv/cxcore.h
 CMakeFiles/Computer_Vision.dir/main.cpp.o: /usr/local/include/opencv2/calib3d.hpp
