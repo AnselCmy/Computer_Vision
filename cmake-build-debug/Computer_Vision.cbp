@@ -93,7 +93,7 @@
 		<Unit filename="/Users/chen/Desktop/CV/Computer_Vision/calGLCM.h">
 			<Option target="Computer_Vision"/>
 		</Unit>
-		<Unit filename="/Users/chen/Desktop/CV/Computer_Vision/histogramEqualization.h">
+		<Unit filename="/Users/chen/Desktop/CV/Computer_Vision/histEqual.h">
 			<Option target="Computer_Vision"/>
 		</Unit>
 		<Unit filename="/Users/chen/Desktop/CV/Computer_Vision/main.cpp">

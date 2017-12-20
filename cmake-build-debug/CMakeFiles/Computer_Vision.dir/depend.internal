@@ -5,7 +5,7 @@ CMakeFiles/Computer_Vision.dir/main.cpp.o
  /Users/chen/Desktop/CV/Computer_Vision/adaptiveThreshold.h
  /Users/chen/Desktop/CV/Computer_Vision/boxFilter.h
  /Users/chen/Desktop/CV/Computer_Vision/calGLCM.h
- /Users/chen/Desktop/CV/Computer_Vision/histogramEqualization.h
+ /Users/chen/Desktop/CV/Computer_Vision/histEqual.h
  /Users/chen/Desktop/CV/Computer_Vision/main.cpp
  /usr/local/include/opencv/cxcore.h
  /usr/local/include/opencv2/calib3d.hpp

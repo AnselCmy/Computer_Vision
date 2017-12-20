@@ -92,7 +92,8 @@ void adaptiveThreshold_( InputArray _src, OutputArray _dst, double maxValue,
 /*
  * The is the adaptiveThreshold by hand
  */
-void adaptiveThresholdByHand (InputArray _src, OutputArray _dst, double maxValue, int blockSize, int delta)
+void adaptiveThresholdByHand(InputArray _src, OutputArray _dst, double maxValue=255,
+                             int blockSize=11, int delta=5)
 {
     assert(blockSize % 2 == 1);
 
@@ -120,7 +121,8 @@ void adaptiveThresholdByHand (InputArray _src, OutputArray _dst, double maxValue
     }
 }
 
-void adaptiveThresholdByIntImg(InputArray _src, OutputArray _dst)
+void adaptiveThresholdByIntImg(InputArray _src, OutputArray _dst, double maxValue=255,
+                               int blockSize=9, double subPercent=0.06)
 {
     // src
     Mat src = _src.getMat();
@@ -131,8 +133,6 @@ void adaptiveThresholdByIntImg(InputArray _src, OutputArray _dst)
     // integral image
     Mat intImg(size, CV_32SC1);
 
-    int s = 11;
-    float t = 0.15;
     // calculate integral image
     int sum;
     for(int w = 0; w < size.width; ++w)
@@ -140,11 +140,13 @@ void adaptiveThresholdByIntImg(InputArray _src, OutputArray _dst)
         sum = 0;
         for(int h = 0; h < size.height; ++h)
         {
-            sum += src.at<uchar>(w, h);
+            sum += src.at<uchar>(h, w);
             if(w == 0)
-                intImg.at<int>(w, h) = sum;
+                intImg.at<int>(h, w) = sum;
             else
-                intImg.at<int>(w, h) = intImg.at<int>(w-1, h) + sum;
+            {
+                intImg.at<int>(h, w) = intImg.at<int>(h, w-1) + sum;
+            }
         }
     }
 
@@ -154,16 +156,60 @@ void adaptiveThresholdByIntImg(InputArray _src, OutputArray _dst)
     {
         for(int h = 0; h < size.height; ++h)
         {
-            x1 = w - s / 2 > 0 ? w - s / 2 : 0;
-            x2 = w + s / 2 < size.width ? w + s / 2 : size.width;
-            y1 = h - s / 2 > 0 ? h - s / 2 : 0;
-            y2 = h + s / 2 < size.height ? h + s / 2 : size.height;
+            x1 = w - blockSize / 2 > 0 ? w - blockSize / 2 : 0;
+            x2 = w + blockSize / 2 < size.width ? w + blockSize / 2 : size.width-1;
+            y1 = h - blockSize / 2 > 0 ? h - blockSize / 2 : 0;
+            y2 = h + blockSize / 2 < size.height ? h + blockSize / 2 : size.height-1;
             count = (x2 - x1) * (y2 - y1);
-            sum = intImg.at<int>(x2, x1) + intImg.at<int>(x1 - 1, y1 - 1)
-                  - intImg.at<int>(x2, y1 - 1) - intImg.at<int>(x1 - 1, y2);
+            sum = intImg.at<int>(y2, x2) + intImg.at<int>(y1, x1)
+                  - intImg.at<int>(y1, x2) - intImg.at<int>(y2, x1);
             // do threshold
-            auto threshold = (uchar)(sum*(1.0-t)/count);
-            dst.at<uchar>(w, h) = (uchar)(src.at<uchar>(w, h) > threshold ? 255 : 0);
+            auto threshold = (uchar)(sum*(1.0-subPercent)/count);
+            dst.at<uchar>(h, w) = (uchar)(src.at<uchar>(h, w) > threshold ? maxValue : 0);
         }
     }
+}
+
+/************************ Track Bar Start ************************/
+int blockSize = 11;
+int subPercent = 15;
+
+void adaptiveThresholdByIntImg_adjust(int, void*)
+{
+    Mat img, rst;
+    img = imread("../img/threshold/threshold_1.bmp", CV_8UC1);
+    adaptiveThresholdByIntImg(img, rst, 255, blockSize, subPercent*0.01);
+    cout << "Block Size: " << blockSize << "\n" << "Sub Percent: " << subPercent*0.01 << endl;
+    imshow("threshold", rst);
+}
+
+void adjust()
+{
+    String winName = "threshold";
+    namedWindow(winName, WINDOW_AUTOSIZE);
+    createTrackbar("Sub Percent(*0.01)", winName, &subPercent, 100, adaptiveThresholdByIntImg_adjust, NULL);
+    createTrackbar("Block Size", winName, &blockSize, 20, adaptiveThresholdByIntImg_adjust, NULL);
+    adaptiveThresholdByIntImg_adjust(0, NULL);
+    waitKey();
+}
+/************************ Track Bar End ************************/
+
+void adaptiveThresholdTest()
+{
+    Mat img, rst;
+    String path = "../img/threshold/threshold_1";
+    String format = ".bmp";
+    img = imread(path+format, CV_8UC1);
+
+    threshold(img, rst, 75, 255, THRESH_BINARY);
+    imwrite(path+"_0"+format, rst);
+
+    adaptiveThreshold(img, rst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY, 11, 5);
+    imwrite(path+"_1"+format, rst);
+
+    adaptiveThresholdByHand(img, rst, 255, 3, 5);
+    imwrite(path+"_2"+format, rst);
+
+    adaptiveThresholdByIntImg(img, rst);
+    imwrite(path+"_3"+format, rst);
 }

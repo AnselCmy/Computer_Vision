@@ -1,15 +1,15 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <stdio.h>
 #include "adaptiveThreshold.h"
 #include "boxFilter.h"
 #include "calGLCM.h"
-#include <stdio.h>
-#include "histogramEqualization.h"
+#include "histEqual.h"
 using namespace std;
 using namespace cv;
 
 int main()
 {
-    histEqualTest();
+    adaptiveThresholdTest();
     return 0;
 }
