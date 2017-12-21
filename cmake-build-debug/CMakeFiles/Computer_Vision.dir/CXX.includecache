@@ -9,6 +9,10 @@
 /Users/chen/Desktop/CV/Computer_Vision/adaptiveThreshold.h
 iostream
 -
+time.h
+-
+cmath
+-
 opencv2/opencv.hpp
 -
 

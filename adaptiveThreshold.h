@@ -2,6 +2,8 @@
 // Created by Chen on 2017/12/6.
 //
 #include <iostream>
+#include <time.h>
+#include <cmath>
 #include <opencv2/opencv.hpp>
 using namespace std;
 using namespace cv;
@@ -121,8 +123,35 @@ void adaptiveThresholdByHand(InputArray _src, OutputArray _dst, double maxValue=
     }
 }
 
-void adaptiveThresholdByIntImg(InputArray _src, OutputArray _dst, double maxValue=255,
-                               int blockSize=9, double subPercent=0.06)
+void getIntegralImage(InputArray _src, OutputArray _intImg, int power = 1)
+{
+    // src
+    Mat src = _src.getMat();
+    Size size = src.size();
+    // integral image
+    _intImg.create(size, CV_64FC1);
+    Mat intImg = _intImg.getMat();
+
+    double sum;
+    for(int w = 0; w < size.width; ++w)
+    {
+        sum = 0;
+        for(int h = 0; h < size.height; ++h)
+        {
+            if(power == 1)
+                sum += src.at<uchar>(h, w);
+            else
+                sum += pow(src.at<uchar>(h, w), power);
+            if(w == 0)
+                intImg.at<double>(h, w) = sum;
+            else
+                intImg.at<double>(h, w) = intImg.at<double>(h, w-1) + sum;
+        }
+    }
+}
+
+void bradleyThreshold(InputArray _src, OutputArray _dst, double maxValue = 255,
+                               int blockSize = 9, double subPercent = 0.09, bool padding = false)
 {
     // src
     Mat src = _src.getMat();
@@ -130,41 +159,174 @@ void adaptiveThresholdByIntImg(InputArray _src, OutputArray _dst, double maxValu
     // dst
     _dst.create(size, src.type());
     Mat dst = _dst.getMat();
-    // integral image
-    Mat intImg(size, CV_32SC1);
-
-    // calculate integral image
-    int sum;
-    for(int w = 0; w < size.width; ++w)
-    {
-        sum = 0;
-        for(int h = 0; h < size.height; ++h)
-        {
-            sum += src.at<uchar>(h, w);
-            if(w == 0)
-                intImg.at<int>(h, w) = sum;
-            else
-            {
-                intImg.at<int>(h, w) = intImg.at<int>(h, w-1) + sum;
-            }
-        }
-    }
+//     integral image
+    Mat intImg;
 
     int x1, y1, x2, y2;
     int count;
+    double sum;
+    int width;
+    int height;
+    int pad = (blockSize - 1) / 2;
+    if(padding)
+    {
+        assert(blockSize % 2 == 1);
+        Mat srcPad;
+        copyMakeBorder(src, srcPad, pad, pad, pad, pad, BORDER_REPLICATE, 0);
+        width = srcPad.size().width;
+        height = srcPad.size().height;
+        getIntegralImage(srcPad, intImg);
+        for(int w = pad; w < size.width+pad; ++w)
+        {
+            for(int h = pad; h < size.height+pad; ++h)
+            {
+                x1 = w - pad;
+                x2 = w + pad;
+                y1 = h - pad;
+                y2 = h + pad;
+
+                count = (x2 - x1 + 1) * (y2 - y1 + 1);
+                if(x1 == 0 && y1 == 0)
+                {
+                    sum = intImg.at<double>(y2, x2);
+                } else if(x1 == 0 && y1 > 0)
+                {
+                    sum = intImg.at<double>(y2, x2) - intImg.at<double>(y1 - 1, x2);
+                } else if(y1 == 0 && x1 > 0)
+                {
+                    sum = intImg.at<double>(y2, x2) - intImg.at<double>(y2, x1 - 1);
+                } else
+                {
+                    sum = intImg.at<double>(y2, x2) + intImg.at<double>(y1 - 1, x1 - 1)
+                          - intImg.at<double>(y1 - 1, x2) - intImg.at<double>(y2, x1 - 1);
+                }
+                // do threshold
+                auto threshold = (uchar) (sum * (1.0 - subPercent) / count);
+//                auto threshold = (uchar)(sum/count - 5);
+                dst.at<uchar>(h-pad, w-pad) = (uchar) (src.at<uchar>(h-pad, w-pad) > threshold ? maxValue : 0);
+            }
+        }
+    }
+    else
+    {
+        width = size.width;
+        height = size.height;
+        getIntegralImage(src, intImg);
+        for(int w = 0; w < size.width; ++w)
+        {
+            for(int h = 0; h < size.height; ++h)
+            {
+                x1 = max(w - pad, 0);
+                x2 = min(w + pad, width - 1);
+                y1 = max(h - pad, 0);
+                y2 = min(h + pad, height - 1);
+
+                count = (x2 - x1 + 1) * (y2 - y1 + 1);
+                if(x1 == 0 && y1 == 0)
+                {
+                    sum = intImg.at<double>(y2, x2);
+                } else if(x1 == 0)
+                {
+                    sum = intImg.at<double>(y2, x2) - intImg.at<double>(y1 - 1, x2);
+                } else if(y1 == 0)
+                {
+                    sum = intImg.at<double>(y2, x2) - intImg.at<double>(y2, x1 - 1);
+                } else
+                {
+                    sum = intImg.at<double>(y2, x2) + intImg.at<double>(y1 - 1, x1 - 1)
+                          - intImg.at<double>(y1 - 1, x2) - intImg.at<double>(y2, x1 - 1);
+                }
+                // do threshold
+                auto threshold = (uchar) (sum * (1.0 - subPercent) / count);
+//                auto threshold = (uchar)(sum/count - 5);
+                dst.at<uchar>(h, w) = (uchar) (src.at<uchar>(h, w) > threshold ? maxValue : 0);
+            }
+        }
+    }
+}
+
+void sauvolaThreshold(InputArray _src, OutputArray _dst, double maxValue=255,
+                      int blockSize=11)
+{
+    // src image
+    Mat src = _src.getMat();
+    Size size = src.size();
+    // dst image
+    _dst.create(size, src.type());
+    Mat dst = _dst.getMat();
+    // integral image
+    Mat intImg, intImgSq;
+    getIntegralImage(_src, intImg, 1);
+    getIntegralImage(_src, intImgSq, 2);
+//    Mat intImg(size, CV_64FC1);
+//    Mat intImgSq(size, CV_64FC1);
+//
+//    double sum;
+//    double sumSq;
+//    for(int w = 0; w < size.width; ++w)
+//    {
+//        sum = 0;
+//        sumSq = 0;
+//        for(int h = 0; h < size.height; ++h)
+//        {
+//                sum += src.at<uchar>(h, w);
+//                sumSq += pow(src.at<uchar>(h, w), 2);
+//            if(w == 0)
+//            {
+//                intImg.at<double>(h, w) = sum;
+//                intImgSq.at<double>(h, w) = sumSq;
+//            }
+//            else
+//            {
+//                intImg.at<double>(h, w) = intImg.at<double>(h, w - 1) + sum;
+//                intImgSq.at<double>(h, w) = intImgSq.at<double>(h, w - 1) + sumSq;
+//            }
+//        }
+//    }
+
+    int x1, y1, x2, y2;
+    int count;
+    double sum, sumSq;
+    double k = 0.1;
+    double mean, stdVariance, threshold;
     for(int w = 0; w < size.width; ++w)
     {
         for(int h = 0; h < size.height; ++h)
         {
-            x1 = w - blockSize / 2 > 0 ? w - blockSize / 2 : 0;
-            x2 = w + blockSize / 2 < size.width ? w + blockSize / 2 : size.width-1;
-            y1 = h - blockSize / 2 > 0 ? h - blockSize / 2 : 0;
-            y2 = h + blockSize / 2 < size.height ? h + blockSize / 2 : size.height-1;
-            count = (x2 - x1) * (y2 - y1);
-            sum = intImg.at<int>(y2, x2) + intImg.at<int>(y1, x1)
-                  - intImg.at<int>(y1, x2) - intImg.at<int>(y2, x1);
-            // do threshold
-            auto threshold = (uchar)(sum*(1.0-subPercent)/count);
+            x1 = max(w - blockSize / 2, 0);
+            x2 = min(w + blockSize / 2, size.width - 1);
+            y1 = max(h - blockSize / 2, 0);
+            y2 = min(h + blockSize / 2, size.height - 1);
+
+            count = (x2 - x1 + 1) * (y2 - y1 + 1);
+            if(x1 == 0 && y1 == 0)
+            {
+                sum = intImg.at<double>(y2, x2);
+                sumSq = intImgSq.at<double>(y2, x2);
+            }
+            else if(x1 == 0 && y1 > 0)
+            {
+                sum = intImg.at<double>(y2, x2) - intImg.at<double>(y1-1, x2);
+                sumSq = intImgSq.at<double>(y2, x2) - intImgSq.at<double>(y1-1, x2);
+            }
+            else if(y1 == 0 && x1 > 0)
+            {
+                sum = intImg.at<double>(y2, x2) - intImg.at<double>(y2, x1-1);
+                sumSq = intImgSq.at<double>(y2, x2) - intImgSq.at<double>(y2, x1-1);
+            }
+            else
+            {
+                sum = intImg.at<double>(y2, x2) + intImg.at<double>(y1-1, x1-1)
+                      - intImg.at<double>(y1-1, x2) - intImg.at<double>(y2, x1-1);
+                sumSq = intImgSq.at<double>(y2, x2) + intImgSq.at<double>(y1-1, x1-1)
+                      - intImgSq.at<double>(y1-1, x2) - intImgSq.at<double>(y2, x1-1);
+            }
+
+            mean = sum/count;
+//            stdVariance = sqrt((sumSq - pow(sum, 2)/count)/(count-1));
+//            stdVariance = sqrt((sumSq - sum*sum/count)/count);
+            stdVariance = sqrt((sumSq/count - mean*mean));
+            threshold = mean*(1+k*((stdVariance/128)-1));
             dst.at<uchar>(h, w) = (uchar)(src.at<uchar>(h, w) > threshold ? maxValue : 0);
         }
     }
@@ -177,8 +339,16 @@ int subPercent = 15;
 void adaptiveThresholdByIntImg_adjust(int, void*)
 {
     Mat img, rst;
-    img = imread("../img/threshold/threshold_1.bmp", CV_8UC1);
-    adaptiveThresholdByIntImg(img, rst, 255, blockSize, subPercent*0.01);
+    img = imread("../img/threshold/threshold_6.bmp", CV_8UC1);
+    resize(img, rst, Size(img.cols/4, img.rows/4), 0, 0, INTER_LINEAR);
+    img = rst;
+    if(blockSize % 2 != 1)
+    {
+        blockSize++;
+    }
+    adaptiveThreshold(img, rst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY, blockSize, subPercent);
+//    bradleyThreshold(img, rst, 255, blockSize, subPercent*0.01, true);
+//    sauvolaThreshold(img, rst, 255, blockSize);
     cout << "Block Size: " << blockSize << "\n" << "Sub Percent: " << subPercent*0.01 << endl;
     imshow("threshold", rst);
 }
@@ -196,20 +366,38 @@ void adjust()
 
 void adaptiveThresholdTest()
 {
-    Mat img, rst;
-    String path = "../img/threshold/threshold_1";
+//    adjust();
+    Mat img, rst, rst1;
+    clock_t start, end;
+    String path = "../img/threshold/threshold_8";
     String format = ".bmp";
     img = imread(path+format, CV_8UC1);
+//    resize(img, rst, Size(img.cols/4, img.rows/4), 0, 0, INTER_LINEAR);
+//    imwrite(path+"_"+format, rst);
 
     threshold(img, rst, 75, 255, THRESH_BINARY);
     imwrite(path+"_0"+format, rst);
-
+    start = clock();
     adaptiveThreshold(img, rst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY, 11, 5);
+    end = clock();
+    printf("the running time of cv::adaptiveThreshold():   %f\n", double(end-start)/CLOCKS_PER_SEC);
     imwrite(path+"_1"+format, rst);
 
-    adaptiveThresholdByHand(img, rst, 255, 3, 5);
+    start = clock();
+    adaptiveThresholdByHand(img, rst, 255, 11, 5);
+    end = clock();
+    printf("the running time of adaptiveThresholdByHand(): %f\n", double(end-start)/CLOCKS_PER_SEC);
     imwrite(path+"_2"+format, rst);
 
-    adaptiveThresholdByIntImg(img, rst);
+    start = clock();
+    bradleyThreshold(img, rst, 255, 11, 0.09, false);
+    end = clock();
+    printf("the running time of bradleyThreshold():        %f\n", double(end-start)/CLOCKS_PER_SEC);
     imwrite(path+"_3"+format, rst);
+
+    start = clock();
+    sauvolaThreshold(img, rst, 255, 11);
+    end = clock();
+    printf("the running time of sauvolaThreshold():        %f\n", double(end-start)/CLOCKS_PER_SEC);
+    imwrite(path+"_4"+format, rst);
 }

@@ -10,7 +10,7 @@ using namespace cv;
 #ifndef CV_BOXFILTER_H
 #define CV_BOXFILTER_H
 
-void boxFilterByHand (InputArray _src, OutputArray _dst, Size ksize)
+void boxFilterByHand(InputArray _src, OutputArray _dst, Size ksize)
 {
     // 作为boxFilter的kernel，边长必须是奇数并且大于1
     assert(ksize.height % 2 == 1 && ksize.height > 1);
@@ -47,7 +47,7 @@ void boxFilterByHand (InputArray _src, OutputArray _dst, Size ksize)
     }
 }
 
-void boxFilterByHandFast (InputArray _src, OutputArray _dst, Size ksize)
+void boxFilterByHandFast(InputArray _src, OutputArray _dst, Size ksize)
 {
     assert(ksize.height % 2 == 1 && ksize.height > 1);
     assert(ksize.height == ksize.width);
