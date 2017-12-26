@@ -59,6 +59,7 @@ void histEqualTest()
     Mat img = imread("../img/film.jpg", CV_8UC1);
     Mat rst;
     histEqual(img, rst);
+//    equalizeHist(img, rst);
     namedWindow("before histogram equalization", WINDOW_AUTOSIZE);
     imshow("before histogram equalization", img);
     namedWindow("after histogram equalization", WINDOW_AUTOSIZE);

@@ -6,6 +6,16 @@
 
 #IncludeRegexTransform: 
 
+/Users/chen/Desktop/CV/Computer_Vision/GLCM.h
+iostream
+-
+opencv2/opencv.hpp
+-
+cmath
+-
+fstream
+-
+
 /Users/chen/Desktop/CV/Computer_Vision/adaptiveThreshold.h
 iostream
 -
@@ -15,6 +25,8 @@ cmath
 -
 opencv2/opencv.hpp
 -
+boxFilter.h
+/Users/chen/Desktop/CV/Computer_Vision/boxFilter.h
 
 /Users/chen/Desktop/CV/Computer_Vision/boxFilter.h
 iostream
@@ -22,14 +34,6 @@ iostream
 time.h
 -
 opencv2/opencv.hpp
--
-
-/Users/chen/Desktop/CV/Computer_Vision/calGLCM.h
-iostream
--
-opencv2/opencv.hpp
--
-cmath
 -
 
 /Users/chen/Desktop/CV/Computer_Vision/histEqual.h
@@ -51,8 +55,8 @@ adaptiveThreshold.h
 /Users/chen/Desktop/CV/Computer_Vision/adaptiveThreshold.h
 boxFilter.h
 /Users/chen/Desktop/CV/Computer_Vision/boxFilter.h
-calGLCM.h
-/Users/chen/Desktop/CV/Computer_Vision/calGLCM.h
+GLCM.h
+/Users/chen/Desktop/CV/Computer_Vision/GLCM.h
 histEqual.h
 /Users/chen/Desktop/CV/Computer_Vision/histEqual.h
 

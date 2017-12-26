@@ -3,13 +3,15 @@
 #include <stdio.h>
 #include "adaptiveThreshold.h"
 #include "boxFilter.h"
-#include "calGLCM.h"
+#include "GLCM.h"
 #include "histEqual.h"
 using namespace std;
 using namespace cv;
 
 int main()
 {
-    adaptiveThresholdTest();
+//    adaptiveThresholdTest();
+//    histEqualTest();
+    calGLCMTest();
     return 0;
 }

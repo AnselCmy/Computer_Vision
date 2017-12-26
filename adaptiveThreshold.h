@@ -5,6 +5,7 @@
 #include <time.h>
 #include <cmath>
 #include <opencv2/opencv.hpp>
+#include "boxFilter.h"
 using namespace std;
 using namespace cv;
 
@@ -258,31 +259,6 @@ void sauvolaThreshold(InputArray _src, OutputArray _dst, double maxValue=255,
     Mat intImg, intImgSq;
     getIntegralImage(_src, intImg, 1);
     getIntegralImage(_src, intImgSq, 2);
-//    Mat intImg(size, CV_64FC1);
-//    Mat intImgSq(size, CV_64FC1);
-//
-//    double sum;
-//    double sumSq;
-//    for(int w = 0; w < size.width; ++w)
-//    {
-//        sum = 0;
-//        sumSq = 0;
-//        for(int h = 0; h < size.height; ++h)
-//        {
-//                sum += src.at<uchar>(h, w);
-//                sumSq += pow(src.at<uchar>(h, w), 2);
-//            if(w == 0)
-//            {
-//                intImg.at<double>(h, w) = sum;
-//                intImgSq.at<double>(h, w) = sumSq;
-//            }
-//            else
-//            {
-//                intImg.at<double>(h, w) = intImg.at<double>(h, w - 1) + sum;
-//                intImgSq.at<double>(h, w) = intImgSq.at<double>(h, w - 1) + sumSq;
-//            }
-//        }
-//    }
 
     int x1, y1, x2, y2;
     int count;
@@ -346,8 +322,8 @@ void adaptiveThresholdByIntImg_adjust(int, void*)
     {
         blockSize++;
     }
-    adaptiveThreshold(img, rst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY, blockSize, subPercent);
-//    bradleyThreshold(img, rst, 255, blockSize, subPercent*0.01, true);
+//    adaptiveThreshold(img, rst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY, blockSize, subPercent);
+    bradleyThreshold(img, rst, 255, blockSize, subPercent*0.01, true);
 //    sauvolaThreshold(img, rst, 255, blockSize);
     cout << "Block Size: " << blockSize << "\n" << "Sub Percent: " << subPercent*0.01 << endl;
     imshow("threshold", rst);
@@ -369,14 +345,13 @@ void adaptiveThresholdTest()
 //    adjust();
     Mat img, rst, rst1;
     clock_t start, end;
-    String path = "../img/threshold/threshold_8";
+    String path = "../img/threshold/threshold_9";
     String format = ".bmp";
     img = imread(path+format, CV_8UC1);
-//    resize(img, rst, Size(img.cols/4, img.rows/4), 0, 0, INTER_LINEAR);
-//    imwrite(path+"_"+format, rst);
+//    threshold(img, rst, 75, 255, THRESH_BINARY);
+//    imwrite(path+"_0"+format, rst);
 
-    threshold(img, rst, 75, 255, THRESH_BINARY);
-    imwrite(path+"_0"+format, rst);
+
     start = clock();
     adaptiveThreshold(img, rst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY, 11, 5);
     end = clock();
