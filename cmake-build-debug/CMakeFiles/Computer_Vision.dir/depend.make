@@ -3,6 +3,7 @@
 
 CMakeFiles/Computer_Vision.dir/main.cpp.o: ../GLCM.h
 CMakeFiles/Computer_Vision.dir/main.cpp.o: ../adaptiveThreshold.h
+CMakeFiles/Computer_Vision.dir/main.cpp.o: ../alphaChannel.h
 CMakeFiles/Computer_Vision.dir/main.cpp.o: ../boxFilter.h
 CMakeFiles/Computer_Vision.dir/main.cpp.o: ../histEqual.h
 CMakeFiles/Computer_Vision.dir/main.cpp.o: ../main.cpp

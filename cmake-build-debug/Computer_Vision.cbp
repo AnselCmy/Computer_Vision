@@ -90,6 +90,9 @@
 		<Unit filename="/Users/chen/Desktop/CV/Computer_Vision/adaptiveThreshold.h">
 			<Option target="Computer_Vision"/>
 		</Unit>
+		<Unit filename="/Users/chen/Desktop/CV/Computer_Vision/alphaChannel.h">
+			<Option target="Computer_Vision"/>
+		</Unit>
 		<Unit filename="/Users/chen/Desktop/CV/Computer_Vision/boxFilter.h">
 			<Option target="Computer_Vision"/>
 		</Unit>

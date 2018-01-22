@@ -19,7 +19,15 @@ fstream
 /Users/chen/Desktop/CV/Computer_Vision/adaptiveThreshold.h
 iostream
 -
+fstream
+-
 time.h
+-
+unistd.h
+-
+sys/types.h
+-
+sys/stat.h
 -
 cmath
 -
@@ -27,6 +35,12 @@ opencv2/opencv.hpp
 -
 boxFilter.h
 /Users/chen/Desktop/CV/Computer_Vision/boxFilter.h
+
+/Users/chen/Desktop/CV/Computer_Vision/alphaChannel.h
+iostream
+-
+opencv2/opencv.hpp
+-
 
 /Users/chen/Desktop/CV/Computer_Vision/boxFilter.h
 iostream
@@ -59,6 +73,8 @@ GLCM.h
 /Users/chen/Desktop/CV/Computer_Vision/GLCM.h
 histEqual.h
 /Users/chen/Desktop/CV/Computer_Vision/histEqual.h
+alphaChannel.h
+/Users/chen/Desktop/CV/Computer_Vision/alphaChannel.h
 
 /usr/local/include/opencv/cxcore.h
 opencv2/core/core_c.h

@@ -2,7 +2,11 @@
 // Created by Chen on 2017/12/6.
 //
 #include <iostream>
+#include <fstream>
 #include <time.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <cmath>
 #include <opencv2/opencv.hpp>
 #include "boxFilter.h"
@@ -95,7 +99,7 @@ void adaptiveThreshold_( InputArray _src, OutputArray _dst, double maxValue,
 /*
  * The is the adaptiveThreshold by hand
  */
-void adaptiveThresholdByHand(InputArray _src, OutputArray _dst, double maxValue=255,
+void adaptiveThresholdByHand(InputArray _src, OutputArray _dst, OutputArray _thresholdMat, double maxValue=255,
                              int blockSize=11, int delta=5)
 {
     assert(blockSize % 2 == 1);
@@ -106,22 +110,41 @@ void adaptiveThresholdByHand(InputArray _src, OutputArray _dst, double maxValue=
     // 构造一个和src相同的dst
     _dst.create(size, src.type());
     Mat dst = _dst.getMat();
+    Mat temp;
+    // thresholdMat
+    _thresholdMat.create(size, src.type());
+    Mat thresholdMat = _thresholdMat.getMat();
+    // cover
+    Mat cover;
+    threshold(src, cover, 0, 255, CV_THRESH_OTSU);
     // 中间的mean作为计算平均值的图像结果
     Mat mean;
     boxFilter(src, mean, src.type(), Size(blockSize, blockSize),
               Point(-1, -1), true, BORDER_REPLICATE);
+    mean.copyTo(thresholdMat);
     // GaussianBlur(src, mean, Size(blockSize, blockSize), 0, 0, BORDER_DEFAULT);
     // 循环遍历进行二值化
     for(int h = 0; h < size.height; h++)
     {
         const uchar* srcLine  = src.ptr(h);
         const uchar* meanLine = mean.ptr(h);
+        const uchar* coverLine = cover.ptr(h);
         uchar* dstLine = dst.ptr(h);
         for(int w = 0; w < size.width; w++)
         {
-            dstLine[w] = (uchar)(srcLine[w] > meanLine[w] - delta ? maxValue : 0);
+            if(coverLine[w] == 0)
+            {
+                dstLine[w] = 255;
+            }
+            else
+            {
+                dstLine[w] = (uchar)(srcLine[w] > meanLine[w] - delta ? maxValue : 0);
+            }
         }
     }
+    Mat element = getStructuringElement(MORPH_RECT, Size(3, 3));
+    dilate(dst, temp, element);
+    erode(temp, dst, element);
 }
 
 void getIntegralImage(InputArray _src, OutputArray _intImg, int power = 1)
@@ -151,8 +174,20 @@ void getIntegralImage(InputArray _src, OutputArray _intImg, int power = 1)
     }
 }
 
-void bradleyThreshold(InputArray _src, OutputArray _dst, double maxValue = 255,
-                               int blockSize = 9, double subPercent = 0.09, bool padding = false)
+void testGetIntImage()
+{
+    uchar m[3][4] = {{3,1,2,5}, {1,4,2,1}, {3,1,6,0}};
+    Mat img = Mat(3, 4, CV_8UC1, m);
+    Mat intImg;
+    getIntegralImage(img, intImg);
+    cout << "Origin Image" << endl;
+    cout << img << endl;
+    cout << "Integral Image" << endl;
+    cout << intImg << endl;
+}
+
+void bradleyThreshold(InputArray _src, OutputArray _dst, OutputArray _thresholdMat, double maxValue = 255,
+                                int blockSize = 9, double subPercent = 0.09, bool padding = false)
 {
     // src
     Mat src = _src.getMat();
@@ -160,8 +195,11 @@ void bradleyThreshold(InputArray _src, OutputArray _dst, double maxValue = 255,
     // dst
     _dst.create(size, src.type());
     Mat dst = _dst.getMat();
-//     integral image
+    // integral image
     Mat intImg;
+    // _threshold
+    _thresholdMat.create(size, src.type());
+    Mat thresholdMat = _thresholdMat.getMat();
 
     int x1, y1, x2, y2;
     int count;
@@ -204,6 +242,7 @@ void bradleyThreshold(InputArray _src, OutputArray _dst, double maxValue = 255,
                 // do threshold
                 auto threshold = (uchar) (sum * (1.0 - subPercent) / count);
 //                auto threshold = (uchar)(sum/count - 5);
+                thresholdMat.at<uchar>(h-pad, w-pad) = (uchar)threshold;
                 dst.at<uchar>(h-pad, w-pad) = (uchar) (src.at<uchar>(h-pad, w-pad) > threshold ? maxValue : 0);
             }
         }
@@ -239,6 +278,7 @@ void bradleyThreshold(InputArray _src, OutputArray _dst, double maxValue = 255,
                 }
                 // do threshold
                 auto threshold = (uchar) (sum * (1.0 - subPercent) / count);
+                thresholdMat.at<uchar>(h, w) = (uchar)threshold;
 //                auto threshold = (uchar)(sum/count - 5);
                 dst.at<uchar>(h, w) = (uchar) (src.at<uchar>(h, w) > threshold ? maxValue : 0);
             }
@@ -246,8 +286,8 @@ void bradleyThreshold(InputArray _src, OutputArray _dst, double maxValue = 255,
     }
 }
 
-void sauvolaThreshold(InputArray _src, OutputArray _dst, double maxValue=255,
-                      int blockSize=11)
+void sauvolaThreshold(InputArray _src, OutputArray _dst, OutputArray _thresholdMat,
+                      double maxValue=255, int blockSize=11)
 {
     // src image
     Mat src = _src.getMat();
@@ -259,6 +299,9 @@ void sauvolaThreshold(InputArray _src, OutputArray _dst, double maxValue=255,
     Mat intImg, intImgSq;
     getIntegralImage(_src, intImg, 1);
     getIntegralImage(_src, intImgSq, 2);
+    // _thresholdMat to store the value of each block
+    _thresholdMat.create(size, src.type());
+    Mat thresholdMat = _thresholdMat.getMat();
 
     int x1, y1, x2, y2;
     int count;
@@ -303,6 +346,7 @@ void sauvolaThreshold(InputArray _src, OutputArray _dst, double maxValue=255,
 //            stdVariance = sqrt((sumSq - sum*sum/count)/count);
             stdVariance = sqrt((sumSq/count - mean*mean));
             threshold = mean*(1+k*((stdVariance/128)-1));
+            thresholdMat.at<uchar>(h, w) = (uchar)threshold;
             dst.at<uchar>(h, w) = (uchar)(src.at<uchar>(h, w) > threshold ? maxValue : 0);
         }
     }
@@ -314,7 +358,7 @@ int subPercent = 15;
 
 void adaptiveThresholdByIntImg_adjust(int, void*)
 {
-    Mat img, rst;
+    Mat img, rst, thresholdMap;
     img = imread("../img/threshold/threshold_6.bmp", CV_8UC1);
     resize(img, rst, Size(img.cols/4, img.rows/4), 0, 0, INTER_LINEAR);
     img = rst;
@@ -323,7 +367,7 @@ void adaptiveThresholdByIntImg_adjust(int, void*)
         blockSize++;
     }
 //    adaptiveThreshold(img, rst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY, blockSize, subPercent);
-    bradleyThreshold(img, rst, 255, blockSize, subPercent*0.01, true);
+    bradleyThreshold(img, rst, thresholdMap, 255, blockSize, subPercent*0.01, true);
 //    sauvolaThreshold(img, rst, 255, blockSize);
     cout << "Block Size: " << blockSize << "\n" << "Sub Percent: " << subPercent*0.01 << endl;
     imshow("threshold", rst);
@@ -343,36 +387,95 @@ void adjust()
 void adaptiveThresholdTest()
 {
 //    adjust();
-    Mat img, rst, rst1;
+    Mat img, rst, rst1, thresholdMat;
     clock_t start, end;
-    String path = "../img/threshold/threshold_9";
+    ofstream file;
+    String path = "../img/threshold/threshold_1";
     String format = ".bmp";
     img = imread(path+format, CV_8UC1);
 //    threshold(img, rst, 75, 255, THRESH_BINARY);
 //    imwrite(path+"_0"+format, rst);
-
+    file.open((path+".pixel.txt").c_str(), ios_base::out);
+    file << img;
 
     start = clock();
     adaptiveThreshold(img, rst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY, 11, 5);
     end = clock();
     printf("the running time of cv::adaptiveThreshold():   %f\n", double(end-start)/CLOCKS_PER_SEC);
     imwrite(path+"_1"+format, rst);
+    file.open((path+"_1.pixel.txt").c_str(), ios_base::out);
+    file << rst;
+    file.close();
 
     start = clock();
-    adaptiveThresholdByHand(img, rst, 255, 11, 5);
+    adaptiveThresholdByHand(img, rst, thresholdMat, 255, 11, 5);
     end = clock();
     printf("the running time of adaptiveThresholdByHand(): %f\n", double(end-start)/CLOCKS_PER_SEC);
     imwrite(path+"_2"+format, rst);
+    file.open((path+"_2.pixel.txt").c_str(), ios_base::out);
+    file << rst;
+    file.close();
+    file.open((path+"_2.thres.txt").c_str(), ios_base::out);
+    file << thresholdMat;
+    file.close();
 
     start = clock();
-    bradleyThreshold(img, rst, 255, 11, 0.09, false);
+    bradleyThreshold(img, rst, thresholdMat, 255, 11, 0.09, false);
     end = clock();
     printf("the running time of bradleyThreshold():        %f\n", double(end-start)/CLOCKS_PER_SEC);
     imwrite(path+"_3"+format, rst);
+    file.open((path+"_3.pixel.txt").c_str(), ios_base::out);
+    file << rst;
+    file.close();
+    file.open((path+"_3.thres.txt").c_str(), ios_base::out);
+    file << thresholdMat;
+    file.close();
 
     start = clock();
-    sauvolaThreshold(img, rst, 255, 11);
+    sauvolaThreshold(img, rst, thresholdMat, 255, 11);
     end = clock();
     printf("the running time of sauvolaThreshold():        %f\n", double(end-start)/CLOCKS_PER_SEC);
     imwrite(path+"_4"+format, rst);
+    file.open((path+"_4.pixel.txt").c_str(), ios_base::out);
+    file << rst;
+    file.close();
+    file.open((path+"_4.thres.txt").c_str(), ios_base::out);
+    file << thresholdMat;
+    file.close();
+}
+
+void split()
+{
+    Mat img = imread("../img/threshold/threshold_1.bmp", CV_8UC1);
+    Mat dst_thres;
+    Mat dst = Mat(img.size(), CV_8UC4);
+    threshold(img, dst_thres, 0, 255, CV_THRESH_OTSU);
+    for(int r=0; r<img.rows; r++)
+    {
+        uchar* thres_line = dst_thres.ptr<uchar>(r);
+        uchar* img_line = img.ptr<uchar>(r);
+        Vec4b* dst_line = dst.ptr<Vec4b>(r);
+        for(int c=0; c<img.cols; c++)
+        {
+            // 白色作为前景保留
+            if(int(thres_line[c]) == 255)
+            {
+                dst_line[c][0] = 255;
+                dst_line[c][1] = 255;
+                dst_line[c][2] = 255;
+                dst_line[c][3] = 255;
+            }
+            else if(int(thres_line[c]) == 0)
+            {
+                dst_line[c][0] = 0;
+                dst_line[c][1] = 0;
+                dst_line[c][2] = 0;
+                dst_line[c][3] = 0;
+            }
+        }
+//        cout << int(thres_line[100]);
+    }
+//    waitKey();
+    imwrite("../img/threshold/threshold_1.thres.png", dst_thres);
+    imwrite("../img/threshold/threshold_1.split.png", dst);
 }
