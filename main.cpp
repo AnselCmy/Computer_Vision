@@ -11,10 +11,10 @@ using namespace cv;
 
 int main()
 {
-    adaptiveThresholdTest();
+//    adaptiveThresholdTest();
 //    blackFrameTest();
 //    histEqualTest();
-//    calGLCMTest();
+    calGLCMTest();
 //    testGetIntImage();
 //    split();
 
