@@ -1,6 +1,8 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
-#include <stdio.h>
+#include <vector>
+#include <cstdio>
+#include <dirent.h>
 #include "adaptiveThreshold.h"
 #include "boxFilter.h"
 #include "GLCM.h"
@@ -14,10 +16,28 @@ int main()
 //    adaptiveThresholdTest();
 //    blackFrameTest();
 //    histEqualTest();
-    calGLCMTest();
+//    calGLCMTest();
 //    testGetIntImage();
 //    split();
 
+
+    struct dirent *dirp;
+
+    DIR* dir = opendir("../img/GLCM_SVM/split_neg");
+    vector<String> fileList;
+    while ((dirp = readdir(dir)) != nullptr) {
+        if (dirp->d_type == DT_REG) {
+//            printf("%s\n", dirp->d_name);
+            fileList.push_back(dirp->d_name);
+        }
+    }
+
+    closedir(dir);
+    vector<String>::iterator it;
+    for(it = fileList.begin(); it!=fileList.end(); it++)
+    {
+        cout << *it << endl;
+    }
 
 //    String dir = "../img/erode/";
 //    String file = "test2";

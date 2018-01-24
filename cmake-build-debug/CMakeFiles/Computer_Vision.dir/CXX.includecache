@@ -63,7 +63,11 @@ iostream
 -
 opencv2/opencv.hpp
 -
-stdio.h
+vector
+-
+cstdio
+-
+dirent.h
 -
 adaptiveThreshold.h
 /Users/chen/Desktop/CV/Computer_Vision/adaptiveThreshold.h
